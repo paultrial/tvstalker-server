@@ -1,6 +1,5 @@
 const express = require('express');
-// const subs = require('../lib/opensubtitles');
-const subs = require('opensubtitles-client').api,
+const subs = require('../lib/opensubtitles');
 const router = express.Router();
 
 router.post('/', async (req, res) => {
@@ -27,13 +26,5 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.post('/subtitles', function (req, res) {
-        subs.login().then(function (token) {
-            subs.searchForTitle(token, 'rum', req.body.name).then(function (results) {
-                subs.logout(token);
-                res.send(results);
-            });
-        });
-    });
 
 module.exports = router;
