@@ -18,12 +18,25 @@ const app = express();
 
 const PORT = process.env.PORT || 3000;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/Series';
-const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:4200';
+const RAW_CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:4200';
+const CORS_ORIGINS = RAW_CORS_ORIGIN.split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 const SESSION_SECRET = process.env.SESSION_SECRET || 'change_me';
 const SESSION_COOKIE_NAME = process.env.SESSION_COOKIE_NAME || 'session';
+const IS_PROD = process.env.NODE_ENV === 'production';
+const COOKIE_SAMESITE = process.env.COOKIE_SAMESITE || (IS_PROD ? 'none' : 'lax');
+const COOKIE_SECURE =
+  typeof process.env.COOKIE_SECURE === 'string'
+    ? process.env.COOKIE_SECURE === 'true'
+    : IS_PROD;
 
 if (!process.env.SESSION_SECRET) {
   console.warn('[warn] SESSION_SECRET is not set. Set it in server/.env for auth to work.');
+}
+
+if (IS_PROD) {
+  app.set('trust proxy', 1);
 }
 
 app.use(helmet());
@@ -32,7 +45,7 @@ app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 app.use(
   cors({
-    origin: CORS_ORIGIN,
+    origin: CORS_ORIGINS.length === 1 ? CORS_ORIGINS[0] : CORS_ORIGINS,
     credentials: true
   })
 );
@@ -44,10 +57,11 @@ app.use(
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({ mongoUrl: MONGO_URI, collectionName: 'sessions' }),
+    proxy: IS_PROD,
     cookie: {
       httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
+      sameSite: COOKIE_SAMESITE,
+      secure: COOKIE_SECURE,
       maxAge: 14 * 24 * 60 * 60 * 1000
     }
   })

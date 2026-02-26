@@ -7,6 +7,13 @@ const { sendPasswordReset } = require('../utils/mailer');
 
 const router = express.Router();
 
+const IS_PROD = process.env.NODE_ENV === 'production';
+const COOKIE_SAMESITE = process.env.COOKIE_SAMESITE || (IS_PROD ? 'none' : 'lax');
+const COOKIE_SECURE =
+  typeof process.env.COOKIE_SECURE === 'string'
+    ? process.env.COOKIE_SECURE === 'true'
+    : IS_PROD;
+
 function sanitizeUser(user) {
   const obj = user.toObject ? user.toObject() : { ...user };
   delete obj.passwordHash;
@@ -73,7 +80,11 @@ router.post('/login', async (req, res) => {
 
 router.post('/logout', (req, res) => {
   req.session?.destroy(() => {
-    res.clearCookie(process.env.SESSION_COOKIE_NAME || 'session');
+    res.clearCookie(process.env.SESSION_COOKIE_NAME || 'session', {
+      httpOnly: true,
+      sameSite: COOKIE_SAMESITE,
+      secure: COOKIE_SECURE
+    });
     return res.json({ ok: true });
   });
 });
