@@ -55,7 +55,7 @@ function parseLoginResponse(xmlResult) {
   }
 
   const faultMembers = normalizeMembers(parsed?.methodResponse?.fault?.value);
-  if (faultMembers) {
+  if (faultMembers.length) {
     const faultString = getMemberString(faultMembers, 'faultString');
     const faultCode = getMemberString(faultMembers, 'faultCode');
     const error = new Error(
