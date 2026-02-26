@@ -37,7 +37,9 @@ function startTvMazeJob() {
   if (process.env.DISABLE_JOBS === 'true') return;
   const cron = process.env.TVMAZE_CRON || '0 3 * * 1';
   schedule.scheduleJob(cron, refreshTvMaze);
-  refreshTvMaze();
+  if (process.env.TVMAZE_RUN_ON_START === 'true') {
+    refreshTvMaze();
+  }
 }
 
 module.exports = { startTvMazeJob };
