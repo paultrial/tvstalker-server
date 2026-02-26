@@ -22,8 +22,15 @@ function toArray(value) {
   return Array.isArray(value) ? value : [value];
 }
 
+function normalizeMembers(value) {
+  if (!value) return [];
+  const struct = value.struct ?? value;
+  const members = struct?.member ?? struct?.members ?? struct;
+  return toArray(members);
+}
+
 function getMemberString(members, name) {
-  const member = toArray(members).find((item) => {
+  const member = normalizeMembers(members).find((item) => {
     const memberName = item?.name?.$t ?? item?.name;
     return memberName === name;
   });
@@ -47,7 +54,7 @@ function parseLoginResponse(xmlResult) {
     throw error;
   }
 
-  const faultMembers = parsed?.methodResponse?.fault?.value?.struct?.member;
+  const faultMembers = normalizeMembers(parsed?.methodResponse?.fault?.value);
   if (faultMembers) {
     const faultString = getMemberString(faultMembers, 'faultString');
     const faultCode = getMemberString(faultMembers, 'faultCode');
@@ -59,7 +66,7 @@ function parseLoginResponse(xmlResult) {
     throw error;
   }
 
-  const members = parsed?.methodResponse?.params?.param?.value?.struct?.member;
+  const members = normalizeMembers(parsed?.methodResponse?.params?.param?.value);
   const token = getMemberString(members, 'token');
   if (!token) {
     const status = getMemberString(members, 'status');
@@ -67,7 +74,11 @@ function parseLoginResponse(xmlResult) {
       `OpenSubtitles login failed: missing token${status ? ` (status: ${status})` : ''}`
     );
     error.code = 'OPENSUBTITLES_LOGIN_MISSING_TOKEN';
-    error.details = { status };
+    if (process.env.OPENSUBTITLES_DEBUG === 'true') {
+      error.details = { status, responsePreview: String(xmlResult).slice(0, 400) };
+    } else {
+      error.details = { status };
+    }
     throw error;
   }
 
@@ -100,6 +111,12 @@ async function login() {
   const password = process.env.OPENSUBTITLES_PASS || '';
   const language = process.env.OPENSUBTITLES_LANG || 'en';
   const userAgent = process.env.OPENSUBTITLES_USERAGENT || 'OpenSubtitlesPlayer v4.7';
+
+  if (!username || !password) {
+    const error = new Error('OpenSubtitles login failed: credentials missing');
+    error.code = 'OPENSUBTITLES_LOGIN_MISSING_CREDENTIALS';
+    throw error;
+  }
 
   const postData = Mustache.render(LOGIN_TEMPLATE, {
     username,

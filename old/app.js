@@ -417,9 +417,6 @@ MongoClient.connect('mongodb://127.0.0.1:27017/Series', function (err, db) {
         });
     });
 
-    // schedule.scheduleJob('0 3 * * *', function () {
-
-    // });
 
     function flCeva() {
         var FLS = sendRequest('GET', 'https://filelist.io/rss.php?feed=dl&cat=21&passkey=7e823ade4f2aeecf036d643499bf954b');
