@@ -23,11 +23,16 @@ function toArray(value) {
 }
 
 function getMemberString(members, name) {
-  const member = toArray(members).find((item) => item?.name?.$t === name);
+  const member = toArray(members).find((item) => {
+    const memberName = item?.name?.$t ?? item?.name;
+    return memberName === name;
+  });
   return (
     member?.value?.string?.$t ??
+    member?.value?.string ??
     member?.value?.int?.$t ??
     member?.value?.i4?.$t ??
+    member?.value?.$t ??
     null
   );
 }
@@ -55,10 +60,14 @@ function parseLoginResponse(xmlResult) {
   }
 
   const members = parsed?.methodResponse?.params?.param?.value?.struct?.member;
-  const token = toArray(members)[0]?.value?.string?.$t;
+  const token = getMemberString(members, 'token');
   if (!token) {
-    const error = new Error('OpenSubtitles login failed: missing token');
+    const status = getMemberString(members, 'status');
+    const error = new Error(
+      `OpenSubtitles login failed: missing token${status ? ` (status: ${status})` : ''}`
+    );
     error.code = 'OPENSUBTITLES_LOGIN_MISSING_TOKEN';
+    error.details = { status };
     throw error;
   }
 
