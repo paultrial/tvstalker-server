@@ -1,21 +1,5 @@
 const express = require('express');
-const subs = require('opensubtitles-client').api;
-
-async function loginSubtitles() {
-  let emittedError = null;
-  const onError = (err) => {
-    emittedError = err;
-  };
-
-  subs.once('error', onError);
-  try {
-    const token = await subs.login();
-    if (emittedError) throw emittedError;
-    return token;
-  } finally {
-    subs.off('error', onError);
-  }
-}
+const subs = require('../lib/opensubtitles');
 
 const router = express.Router();
 
@@ -25,8 +9,7 @@ router.post('/', async (req, res) => {
     const { name, language } = req.body || {};
     if (!name) return res.status(400).json({ error: 'Missing name' });
 
-    token = await loginSubtitles();
-    if (!token) return res.status(502).json({ error: 'Subtitle provider unavailable' });
+    token = await subs.login();
 
     const results = await subs.searchForTitle(token, language || 'rum', name);
     return res.json(results || []);
