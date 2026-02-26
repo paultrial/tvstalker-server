@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
 
-const TvMazeShowSchema = new mongoose.Schema({}, { strict: false, collection: 'tvMazeFull' });
+const TvMazeShowSchema = new mongoose.Schema(
+  { id: { type: Number } },
+  { strict: false, collection: 'tvMazeFull', id: false }
+);
 TvMazeShowSchema.index({ id: 1 }, { unique: false });
 TvMazeShowSchema.index({ name: 1 });
 
