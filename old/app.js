@@ -16,7 +16,7 @@ app.use(bodyParser());
 app.use(cookieParser());
 app.set('view engine', 'ejs');
 
-MongoClient.connect('mongodb://127.0.0.1:27017/Series', function (err, db) {
+MongoClient.connect('mongodb://192.168.10.127:27018/Series', function (err, db) {
     'use strict';
     if (err) throw err;
 
@@ -502,7 +502,7 @@ MongoClient.connect('mongodb://127.0.0.1:27017/Series', function (err, db) {
 });
 
 function createTvMazeCollection() {
-    MongoClient.connect('mongodb://127.0.0.1:27017/Series', function (err, db) {
+    MongoClient.connect('mongodb://192.168.10.127:27018/Series', function (err, db) {
         'use strict';
         if (err) throw err;
         var tvMazeFull = db.collection('tvMazeFull');

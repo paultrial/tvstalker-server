@@ -16,15 +16,19 @@ const { startTvMazeJob } = require('./jobs/tvmazeJob');
 
 const app = express();
 
+const IS_PROD = process.env.NODE_ENV === 'production';
 const PORT = process.env.PORT || 3000;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/Series';
+const MONGO_URI =
+  IS_PROD
+    ? process.env.MONGO_URI
+    : process.env.MONGO_URI_LOCAL || process.env.MONGO_URI;
+const EFFECTIVE_MONGO_URI = MONGO_URI || 'mongodb://192.168.10.127:27018/Series';
 const RAW_CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:4200';
 const CORS_ORIGINS = RAW_CORS_ORIGIN.split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
 const SESSION_SECRET = process.env.SESSION_SECRET || 'change_me';
 const SESSION_COOKIE_NAME = process.env.SESSION_COOKIE_NAME || 'session';
-const IS_PROD = process.env.NODE_ENV === 'production';
 const COOKIE_SAMESITE = process.env.COOKIE_SAMESITE || (IS_PROD ? 'none' : 'lax');
 const COOKIE_SECURE =
   typeof process.env.COOKIE_SECURE === 'string'
@@ -56,7 +60,7 @@ app.use(
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({ mongoUrl: MONGO_URI, collectionName: 'sessions' }),
+    store: MongoStore.create({ mongoUrl: EFFECTIVE_MONGO_URI, collectionName: 'sessions' }),
     proxy: IS_PROD,
     cookie: {
       httpOnly: true,
@@ -77,7 +81,7 @@ app.use((req, res) => res.status(404).json({ error: 'Not found' }));
 
 async function start() {
   try {
-    await mongoose.connect(MONGO_URI);
+    await mongoose.connect(EFFECTIVE_MONGO_URI);
     console.log('[db] connected');
 
     startRssJobs();
